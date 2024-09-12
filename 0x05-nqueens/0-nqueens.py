@@ -2,56 +2,115 @@
 
 import sys
 
+if len(sys.argv) != 2:
+    print("Usage: nqueens N")
+    exit(1)
+try:
+    dimension = int(sys.argv[1])
+except Exception as E:
+    print("N must be a number")
+    exit(1)
 
-def solve(row, column):
-    solver = [[]]
-    for q in range(row):
-        solver = place_queen(q, column, solver)
-    return solver
+if dimension < 4:
+    print("N must be at least 4")
+    exit(1)
+
+board = {}
+for row in range(0, dimension):
+    for column in range(0, dimension):
+        placement = (row, column)
+        board[placement] = "#"
 
 
-def place_queen(q, column, prev_solver):
-    solver_queen = []
-    for array in prev_solver:
-        for x in range(column):
-            if is_safe(q, x, array):
-                solver_queen.append(array + [x])
-    return solver_queen
+def validate(board, spots):
+    """ Valitate the board """
+    if len([i for i in board.values() if i == "#"]) < spots and spots != 0:
+        return False
+    return True
 
 
-def is_safe(q, x, array):
-    if x in array:
-        return (False)
+def solve(dimension, index, board, safe_T, spots_L):
+    """ main loop for recursive """
+    if len(safe_T) > dimension:
+        return False
+    moved_board = fill_block(dimension, index, board)
+    if validate(moved_board, spots_L) and moved_board:
+        spots_L -= 1
+        inital = (index[0] + 1, index[1])
+        for i in range(dimension):
+            try:
+                if moved_board[(inital[0], i)] == "#":
+                    safe_T.append([inital[0], i])
+                    if not solve(
+                            dimension, (inital[0], i), moved_board,
+                            safe_T, spots_L):
+                        safe_T.pop()
+                        continue
+            except BaseException:
+                continue
+    if spots_L < 0 and len(safe_T) == dimension:
+        print(safe_T)
     else:
-        return all(abs(array[column] - x) != q - column
-                   for column in range(q))
+        return False
 
 
-def init():
-    if len(sys.argv) != 2:
-        print("Usage: nqueens N")
-        sys.exit(1)
-    if sys.argv[1].isdigit():
-        the_queen = int(sys.argv[1])
-    else:
-        print("N must be a number")
-        sys.exit(1)
-    if the_queen < 4:
-        print("N must be at least 4")
-        sys.exit(1)
-    return(the_queen)
+def fill_block(dimension, index, board_T):
+    """ function to fill queens available spots """
+    board = board_T.copy()
+    board[index] = 0
+    diagonal_C_neg_x = []
+    diagonal_C_pos_x = []
+    diagonal_C_neg_y = []
+    diagonal_C_pos_y = []
+    x = index[1]
+    while x - 1 >= 0:
+        less_x = (index[0], x - 1)
+        diagonal_C_neg_x.append(x - 1)
+        if board.get(less_x) == 0:
+            return False
+        board[less_x] = 1
+        x -= 1
+
+    y = index[0]
+    while y - 1 >= 0:
+        less_y = (y - 1, index[1])
+        diagonal_C_neg_y.append(y - 1)
+        if board.get(less_y) == 0:
+            return False
+        board[less_y] = 1
+        y -= 1
+
+    x = index[1]
+    while x + 1 < dimension:
+        more_x = (index[0], x + 1)
+        diagonal_C_pos_x.append(x + 1)
+        if board.get(more_x) == 0:
+            return False
+        board[more_x] = 1
+        x += 1
+
+    y = index[0]
+    while y + 1 < dimension:
+        more_y = (y + 1, index[1])
+        diagonal_C_pos_y.append(y + 1)
+        if board.get(more_y) == 0:
+            return False
+        board[more_y] = 1
+        y += 1
+
+    upper_left = tuple(zip(diagonal_C_pos_y, diagonal_C_neg_x))
+    upper_right = tuple(zip(diagonal_C_pos_y, diagonal_C_pos_x))
+    lower_left = tuple(zip(diagonal_C_neg_y, diagonal_C_neg_x))
+    lower_right = tuple(zip(diagonal_C_neg_y, diagonal_C_pos_x))
+    for ind in (upper_left + upper_right + lower_left + lower_right):
+        if board.get(ind) == 0:
+            return False
+        board[ind] = 1
+    return board
 
 
-def n_queens():
-
-    the_queen = init()
-    solver = solve(the_queen, the_queen)
-    for array in solver:
-        clean = []
-        for q, x in enumerate(array):
-            clean.append([q, x])
-        print(clean)
-
-
-if __name__ == '__main__':
-    n_queens()
+for i in range(0, dimension):
+    inital = (0, i)
+    safe_T = [list(inital)]
+    spots_L = dimension - 1
+    solve(dimension, inital, board, safe_T, spots_L)
