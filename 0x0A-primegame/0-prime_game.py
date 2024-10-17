@@ -1,29 +1,42 @@
 #!/usr/bin/python3
-""" Module for solving prime game question """
+"""0. Prime Game - Maria and Ben are playing a game"""
+
 
 def isWinner(x, nums):
-    """function that checks for the winner"""
-    if not nums or x < 1:
+    """x - rounds
+    nums - numbers list
+    """
+    if x <= 0 or nums is None:
         return None
-    max_num = max(nums)
+    if x != len(nums):
+        return None
 
-    my_filter = [True for _ in range(max(max_num + 1, 2))]
-    for i in range(2, int(pow(max_num, 0.5)) + 1):
-        if not my_filter[i]:
-            continue
-        for j in range(i * i, max_num + 1, i):
-            my_filter[j] = False
-    my_filter[0] = my_filter[1] = False
-    y = 0
-    for i in range(len(my_filter)):
-        if my_filter[i]:
-            y += 1
-        my_filter[i] = y
-    player1 = 0
-    for x in nums:
-        player1 += my_filter[x] % 2 == 1
-    if player1 * 2 == len(nums):
-        return None
-    if player1 * 2 > len(nums):
+    ben = 0
+    maria = 0
+
+    a = [1 for x in range(sorted(nums)[-1] + 1)]
+    a[0], a[1] = 0, 0
+    for i in range(2, len(a)):
+        rm_multiples(a, i)
+
+    for i in nums:
+        if sum(a[0:i + 1]) % 2 == 0:
+            ben += 1
+        else:
+            maria += 1
+    if ben > maria:
+        return "Ben"
+    if maria > ben:
         return "Maria"
-    return "Ben"
+    return None
+
+
+def rm_multiples(ls, x):
+    """removes multiple
+    of primes
+    """
+    for i in range(2, len(ls)):
+        try:
+            ls[i * x] = 0
+        except (ValueError, IndexError):
+            break
